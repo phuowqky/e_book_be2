@@ -10,9 +10,10 @@ import { auth } from '../../../middleware/auth.js';
 import multer from 'multer';
 
 const router = express.Router();
-
+const storage = multer.memoryStorage();
 // Cấu hình multer cho upload file
 const upload = multer({ 
+    storage: storage,
     dest: 'uploads/',
     limits: {
         fileSize: 5 * 1024 * 1024 // Giới hạn 5MB

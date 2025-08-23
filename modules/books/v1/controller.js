@@ -1,5 +1,6 @@
 import Book from '../../../models/book.js';
 import cloudinary from '../../../config/cloudinary.js';
+import streamifier from "streamifier";
 
 // Lấy danh sách sách
 export async function getBooks(req, res) {
@@ -31,26 +32,82 @@ export async function getBookById(req, res) {
 }
 
 // Tạo sách mới với upload bìa
+// export async function createBook(req, res) {
+//     console.log(req.file);
+//     try {
+//         const { title, author, description, category, tags, publishYear, isbn, totalPages } = req.body;
+        
+//         // Xử lý upload ảnh bìa lên Cloudinary
+//         let coverImage = '';
+//         if (req.file) {
+//             const result = await cloudinary.uploader.upload(req.file.path, {
+//                 folder: 'book-covers', // Tạo folder riêng cho bìa sách
+//                 transformation: [
+//                     { width: 400, height: 600, crop: 'fill' }, // Resize ảnh bìa
+//                     { quality: 'auto' } // Tối ưu chất lượng
+//                 ]
+//             });
+//             coverImage = result.secure_url;
+            
+//             // Xóa file tạm sau khi upload
+//             // fs.unlinkSync(req.file.path); // Cần import fs
+//         }
+        
+//         const book = new Book({
+//             title,
+//             author,
+//             description,
+//             coverImage,
+//             category,
+//             tags: tags ? tags.split(',') : [],
+//             publishYear,
+//             isbn,
+//             totalPages,
+//             createdBy: req.user.id // Từ middleware auth
+//         });
+        
+//         await book.save();
+//         res.status(201).json({ 
+//             success: true, 
+//             data: book,
+//             message: 'Tạo sách thành công'
+//         });
+//     } catch (error) {
+//         res.status(500).json({ success: false, message: error.message });
+//     }
+// }
+
 export async function createBook(req, res) {
+    console.log(req.file);
     try {
         const { title, author, description, category, tags, publishYear, isbn, totalPages } = req.body;
-        
-        // Xử lý upload ảnh bìa lên Cloudinary
+
         let coverImage = '';
         if (req.file) {
-            const result = await cloudinary.uploader.upload(req.file.path, {
-                folder: 'book-covers', // Tạo folder riêng cho bìa sách
-                transformation: [
-                    { width: 400, height: 600, crop: 'fill' }, // Resize ảnh bìa
-                    { quality: 'auto' } // Tối ưu chất lượng
-                ]
-            });
+            // Upload bằng stream từ buffer
+            const uploadFromBuffer = () => {
+                return new Promise((resolve, reject) => {
+                    const stream = cloudinary.uploader.upload_stream(
+                        {
+                            folder: 'book-covers',
+                            transformation: [
+                                { width: 400, height: 600, crop: 'fill' },
+                                { quality: 'auto' }
+                            ]
+                        },
+                        (error, result) => {
+                            if (error) reject(error);
+                            else resolve(result);
+                        }
+                    );
+                    streamifier.createReadStream(req.file.buffer).pipe(stream);
+                });
+            };
+
+            const result = await uploadFromBuffer();
             coverImage = result.secure_url;
-            
-            // Xóa file tạm sau khi upload
-            // fs.unlinkSync(req.file.path); // Cần import fs
         }
-        
+
         const book = new Book({
             title,
             author,
@@ -61,12 +118,12 @@ export async function createBook(req, res) {
             publishYear,
             isbn,
             totalPages,
-            createdBy: req.user.id // Từ middleware auth
+            createdBy: req.user.id
         });
-        
+
         await book.save();
-        res.status(201).json({ 
-            success: true, 
+        res.status(201).json({
+            success: true,
             data: book,
             message: 'Tạo sách thành công'
         });
