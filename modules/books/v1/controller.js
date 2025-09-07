@@ -5,13 +5,27 @@ import streamifier from "streamifier";
 // Lấy danh sách sách
 export async function getBooks(req, res) {
     try {
+        const page = parseInt(req.query.page) || 1;
+        const limit = parseInt(req.query.limit) || 10;
+        const skip = (page -1) * limit;
+        
         const books = await Book.find({ status: 'active' })
             .populate('createdBy', 'userName email')
-            .sort({ createdAt: -1 });
-        
-        res.json({ success: true, data: books });
+            .sort({ createdAt: -1 })
+            .skip(skip)
+            .limit(limit);
+
+        const total = await Book.countDocuments({ status: 'active' });
+
+        res.json({ success: true, data: books, pagination:{
+            page,
+            limit,
+            total,
+            totalPages: Math.ceil(total / limit),
+            hasMore: page * limit < total
+        } });
     } catch (error) {
-        res.status(500).json({ success: false, message: error.message });
+        res.status(200).json({ success: false, message: error.message });
     }
 }
 
