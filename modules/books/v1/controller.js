@@ -45,56 +45,11 @@ export async function getBookById(req, res) {
     }
 }
 
-// Tạo sách mới với upload bìa
-// export async function createBook(req, res) {
-//     console.log(req.file);
-//     try {
-//         const { title, author, description, category, tags, publishYear, isbn, totalPages } = req.body;
-        
-//         // Xử lý upload ảnh bìa lên Cloudinary
-//         let coverImage = '';
-//         if (req.file) {
-//             const result = await cloudinary.uploader.upload(req.file.path, {
-//                 folder: 'book-covers', // Tạo folder riêng cho bìa sách
-//                 transformation: [
-//                     { width: 400, height: 600, crop: 'fill' }, // Resize ảnh bìa
-//                     { quality: 'auto' } // Tối ưu chất lượng
-//                 ]
-//             });
-//             coverImage = result.secure_url;
-            
-//             // Xóa file tạm sau khi upload
-//             // fs.unlinkSync(req.file.path); // Cần import fs
-//         }
-        
-//         const book = new Book({
-//             title,
-//             author,
-//             description,
-//             coverImage,
-//             category,
-//             tags: tags ? tags.split(',') : [],
-//             publishYear,
-//             isbn,
-//             totalPages,
-//             createdBy: req.user.id // Từ middleware auth
-//         });
-        
-//         await book.save();
-//         res.status(201).json({ 
-//             success: true, 
-//             data: book,
-//             message: 'Tạo sách thành công'
-//         });
-//     } catch (error) {
-//         res.status(500).json({ success: false, message: error.message });
-//     }
-// }
 
 export async function createBook(req, res) {
     console.log(req.file);
     try {
-        const { title, author, description, category, tags, publishYear, isbn, totalPages } = req.body;
+        const { title, author, description, category, tags, publishYear, isbn, totalPages, language } = req.body;
 
         let coverImage = '';
         if (req.file) {
@@ -132,6 +87,7 @@ export async function createBook(req, res) {
             publishYear,
             isbn,
             totalPages,
+            language,
             createdBy: req.user.id
         });
 

@@ -10,6 +10,7 @@ const bookSchema = new mongoose.Schema({
     publishYear: { type: Number },
     isbn: { type: String },
     totalPages: { type: Number },
+    language: {type: String, default: 'English'},
     status: { type: String, enum: ['active', 'inactive'], default: 'active' },
     createdBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' }
 }, { timestamps: true });
