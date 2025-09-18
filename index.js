@@ -2,6 +2,7 @@ import express from 'express'
 import { connectDB } from './config/db.js'
 import authRoutes from './routes/authRoutes.js'
 import bookRoutes from './modules/books/v1/routes.js';
+import userRoutes from './routes/user_routes.js'
 
 
 import dotenv from 'dotenv'
@@ -43,6 +44,7 @@ app.get('/', (req, res) => {
 
 app.use("/api/auth", authRoutes);
 app.use('/api/books', bookRoutes);
+app.use("/api/users", userRoutes);
 
 // TODO: 113
 // connectDBQuestion1() đang k sử dụng
