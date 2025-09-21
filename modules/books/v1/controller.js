@@ -1,6 +1,7 @@
 import Book from '../../../models/book.js';
 import cloudinary from '../../../config/cloudinary.js';
 import streamifier from "streamifier";
+import { supabase } from '../../../config/supabase.js';
 
 // Lấy danh sách sách
 export async function getBooks(req, res) {
@@ -45,16 +46,18 @@ export async function getBookById(req, res) {
     }
 }
 
-
 export async function createBook(req, res) {
-    console.log(req.file);
     try {
         const { title, author, description, category, tags, publishYear, isbn, totalPages, language } = req.body;
 
         let coverImage = '';
-        if (req.file) {
-            // Upload bằng stream từ buffer
-            const uploadFromBuffer = () => {
+        let epubFile = '';
+        let epubFileName = '';
+        let epubFileSize = 0;
+
+        // Upload cover image lên Cloudinary
+        if (req.files && req.files.coverImage) {
+            const uploadCoverImage = () => {
                 return new Promise((resolve, reject) => {
                     const stream = cloudinary.uploader.upload_stream(
                         {
@@ -69,12 +72,47 @@ export async function createBook(req, res) {
                             else resolve(result);
                         }
                     );
-                    streamifier.createReadStream(req.file.buffer).pipe(stream);
+                    streamifier.createReadStream(req.files.coverImage[0].buffer).pipe(stream);
                 });
             };
 
-            const result = await uploadFromBuffer();
+            const result = await uploadCoverImage();
             coverImage = result.secure_url;
+        }
+
+        // Upload EPUB file lên Supabase Storage
+        if (req.files && req.files.epubFile) {
+            const epubFileData = req.files.epubFile[0];
+            const fileName = `epub-files/${Date.now()}-${epubFileData.originalname}`;
+            
+            try {
+                const { data, error } = await supabase.storage
+                    .from('ebook_storage1') // Tên bucket mới
+                    .upload(fileName, epubFileData.buffer, {
+                        contentType: epubFileData.mimetype,
+                        cacheControl: '3600',
+                        upsert: false
+                    });
+
+                if (error) {
+                    throw error;
+                }
+
+                // Lấy public URL
+                const { data: urlData } = supabase.storage
+                    .from('ebook_storage1') // Tên bucket mới
+                    .getPublicUrl(fileName);
+
+                epubFile = urlData.publicUrl;
+                epubFileName = epubFileData.originalname;
+                epubFileSize = epubFileData.size;
+            } catch (error) {
+                console.error('Error uploading to Supabase:', error);
+                return res.status(500).json({ 
+                    success: false, 
+                    message: 'Lỗi upload file EPUB: ' + error.message 
+                });
+            }
         }
 
         const book = new Book({
@@ -82,6 +120,9 @@ export async function createBook(req, res) {
             author,
             description,
             coverImage,
+            epubFile,
+            epubFileName,
+            epubFileSize,
             category,
             tags: tags ? tags.split(',') : [],
             publishYear,

@@ -5,6 +5,9 @@ const bookSchema = new mongoose.Schema({
     author: { type: String, required: true },
     description: { type: String },
     coverImage: { type: String }, // URL từ Cloudinary
+    epubFile: { type: String }, // URL từ Firebase Storage
+    epubFileName: { type: String }, // Tên file gốc
+    epubFileSize: { type: Number }, // Kích thước file
     category: { type: String },
     tags: [String],
     publishYear: { type: Number },

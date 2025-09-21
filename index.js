@@ -1,9 +1,9 @@
 import express from 'express'
 import { connectDB } from './config/db.js'
+import './config/supabase.js' // Import Supabase config
 import authRoutes from './routes/authRoutes.js'
 import bookRoutes from './modules/books/v1/routes.js';
 import userRoutes from './routes/user_routes.js'
-
 
 import dotenv from 'dotenv'
 import cors from 'cors'
