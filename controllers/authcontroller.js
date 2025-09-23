@@ -1,7 +1,7 @@
 import bcrypt from "bcryptjs";
 import validator from "validator";
 import User from "../models/user.js";
-import { ObjectId } from "mongodb";
+
 import jwt from "jsonwebtoken"; // Thêm import jwt
 import dotenv from "dotenv"; // Thêm import dotenv
 
@@ -9,10 +9,10 @@ dotenv.config(); // Cấu hình dotenv
 
 export async function register(req, res) {
     try {
-        const { phone, userName, email, yearOfBirth, password, confirmPassword } = req.body;
+        const { phone, userName, email, password, confirmPassword } = req.body;
 
         // Kiểm tra thiếu trường
-        if (!phone || !userName || !email || !yearOfBirth || !password || !confirmPassword) {
+        if (!phone || !userName || !email || !password || !confirmPassword) {
             return res.status(200).json({
                 success: false,
                 message: "All fields are required."
@@ -28,13 +28,13 @@ export async function register(req, res) {
         }
 
         // Kiểm tra năm sinh hợp lệ
-        const currentYear = new Date().getFullYear();
-        if (isNaN(yearOfBirth) || yearOfBirth < 1900 || yearOfBirth > currentYear) {
-            return res.status(200).json({
-                success: false,
-                message: "Invalid year of birth."
-            });
-        }
+        // const currentYear = new Date().getFullYear();
+        // if (isNaN(yearOfBirth) || yearOfBirth < 1900 || yearOfBirth > currentYear) {
+        //     return res.status(200).json({
+        //         success: false,
+        //         message: "Invalid year of birth."
+        //     });
+        // }
 
         // Kiểm tra mật khẩu trùng khớp
         if (password !== confirmPassword) {
@@ -61,7 +61,7 @@ export async function register(req, res) {
             phone,
             userName,
             email,
-            yearOfBirth,
+            // yearOfBirth,
             password: hashedPassword
         });
 
@@ -74,7 +74,7 @@ export async function register(req, res) {
                 phone: newUser.phone,
                 userName: newUser.userName,
                 email: newUser.email,
-                yearOfBirth: newUser.yearOfBirth
+                // yearOfBirth: newUser.yearOfBirth
             }
         });
     } catch (err) {
@@ -147,7 +147,7 @@ export async function login(req, res) {
                     phone: user.phone,
                     userName: user.userName,
                     email: user.email,
-                    yearOfBirth: user.yearOfBirth,
+                    // yearOfBirth: user.yearOfBirth,
                     role: user.role || 1
                 }
             }
