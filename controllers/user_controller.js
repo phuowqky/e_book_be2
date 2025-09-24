@@ -31,12 +31,19 @@ export async function toggleFavorite(req, res) {
 
 export async function getFavoriteBooks(req, res) {
     try {
-        const user = await User.findById(req.user.userId).populate('favorites');
+        const page = parseInt(req.query.page) || 1;
+        const limit = parseInt(req.query.limit) || 10;
+        const skip = (page - 1)* limit;
+
+        const user = await User.findById(req.user.userId).populate({path: 'favorites', options: {
+            skip: skip,
+            limit: limit
+        }});
         if (!user) {
             return res.status(404).json({ success: false, message: 'Không tìm thấy user' });
         }
 
-        res.json({ success: true, data: user.favorites });
+        res.json({ success: true, data: user.favorites, pagination: {page, limit} });
     } catch (error) {
         res.status(500).json({ success: false, message: error.message });
     }
