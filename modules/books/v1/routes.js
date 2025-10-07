@@ -4,7 +4,8 @@ import {
     getBookById, 
     createBook, 
     updateBook, 
-    deleteBook 
+    deleteBook,
+    downloadEpub 
 } from './controller.js';
 import { auth } from '../../../middleware/auth.js';
 import multer from 'multer';
@@ -39,5 +40,6 @@ router.post('/', auth, upload.fields([
 ]), createBook);
 router.put('/:id', auth, updateBook);
 router.delete('/:id', auth, deleteBook);
+router.get('/download/:fileName', downloadEpub);
 
 export default router;
