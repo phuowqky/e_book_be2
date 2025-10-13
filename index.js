@@ -4,6 +4,7 @@ import './config/supabase.js' // Import Supabase config
 import authRoutes from './routes/authRoutes.js'
 import bookRoutes from './modules/books/v1/routes.js';
 import userRoutes from './routes/user_routes.js'
+import chapterRouter from './modules/chapters/v1/chapters_routes.js'
 
 import dotenv from 'dotenv'
 import cors from 'cors'
@@ -45,6 +46,7 @@ app.get('/', (req, res) => {
 app.use("/api/auth", authRoutes);
 app.use('/api/books', bookRoutes);
 app.use("/api/users", userRoutes);
+app.use("/api/chapters", chapterRouter);
 
 // TODO: 113
 // connectDBQuestion1() đang k sử dụng

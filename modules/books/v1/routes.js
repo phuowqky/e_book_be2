@@ -5,6 +5,9 @@ import {
     createBook, 
     updateBook, 
     deleteBook,
+    uploadBook,
+    uploadEpub,
+    // getChapterContent,
     downloadEpub 
 } from './controller.js';
 import { auth } from '../../../middleware/auth.js';
@@ -41,5 +44,8 @@ router.post('/', auth, upload.fields([
 router.put('/:id', auth, updateBook);
 router.delete('/:id', auth, deleteBook);
 router.get('/download/:fileName', downloadEpub);
+router.post("/upload", uploadBook);
+router.post("/upload", upload.single("epub"), uploadEpub);
+// router.get("/books/:bookId/chapters/:index", getChapterContent);
 
 export default router;
