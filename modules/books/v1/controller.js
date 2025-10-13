@@ -219,21 +219,21 @@ export async function downloadEpub(req, res) {
     res.status(500).json({ success: false, message: "Internal server error" });
   }
 }
+
 export const uploadBook = async (req, res) => {
   try {
     const { title, author, epubUrl, category, language } = req.body;
+    if (!epubUrl) throw new Error("Thiếu link EPUB");
 
-    // Parse EPUB trước để lấy metadata và chapters
+    // 1️⃣ Parse EPUB trước để lấy metadata và chapters
     const parsedData = await parseEpubAndSave(epubUrl);
 
-    // Check sách đã tồn tại theo title
+    // 2️⃣ Kiểm tra sách đã tồn tại chưa
     let book = await Book.findOne({ title });
-
     if (!book) {
-      // Nếu chưa có thì tạo mới
       book = await Book.create({
-        title,
-        author: author || parsedData.metadata.creator,
+        title: title || parsedData.metadata.title,
+        author: author || parsedData.metadata.author,
         description: parsedData.metadata.description,
         coverImage: parsedData.metadata.cover,
         epubFile: epubUrl,
@@ -244,8 +244,8 @@ export const uploadBook = async (req, res) => {
       });
     }
 
-    // Lưu chapters vào collection Chapter
-    if (parsedData.chapters && parsedData.chapters.length > 0) {
+    // 3️⃣ Lưu danh sách chapter
+    if (parsedData.chapters?.length) {
       const chapters = parsedData.chapters.map((chap) => ({
         bookId: book._id,
         title: chap.title,
@@ -257,7 +257,7 @@ export const uploadBook = async (req, res) => {
 
     res.status(200).json({
       success: true,
-      message: "Upload & parse thành công",
+      message: "Upload & parse EPUB thành công",
       bookId: book._id,
       parsedData,
     });
@@ -266,6 +266,54 @@ export const uploadBook = async (req, res) => {
     res.status(500).json({ success: false, message: err.message });
   }
 };
+
+// export const uploadBook = async (req, res) => {
+//   try {
+//     const { title, author, epubUrl, category, language } = req.body;
+
+//     // Parse EPUB trước để lấy metadata và chapters
+//     const parsedData = await parseEpubAndSave(epubUrl);
+
+//     // Check sách đã tồn tại theo title
+//     let book = await Book.findOne({ title });
+
+//     if (!book) {
+//       // Nếu chưa có thì tạo mới
+//       book = await Book.create({
+//         title,
+//         author: author || parsedData.metadata.creator,
+//         description: parsedData.metadata.description,
+//         coverImage: parsedData.metadata.cover,
+//         epubFile: epubUrl,
+//         epubFileName: parsedData.metadata.filename || "",
+//         category: category || "Chưa phân loại",
+//         language: language || "Unknown",
+//         status: "active",
+//       });
+//     }
+
+//     // Lưu chapters vào collection Chapter
+//     if (parsedData.chapters && parsedData.chapters.length > 0) {
+//       const chapters = parsedData.chapters.map((chap) => ({
+//         bookId: book._id,
+//         title: chap.title,
+//         index: chap.index,
+//         href: chap.href,
+//       }));
+//       await Chapter.insertMany(chapters);
+//     }
+
+//     res.status(200).json({
+//       success: true,
+//       message: "Upload & parse thành công",
+//       bookId: book._id,
+//       parsedData,
+//     });
+//   } catch (err) {
+//     console.error("💥 Lỗi uploadBook:", err);
+//     res.status(500).json({ success: false, message: err.message });
+//   }
+// };
 
 
 
@@ -322,31 +370,83 @@ export const uploadEpub = async (req, res) => {
 
 
 
+// export const getChapterContent = async (req, res) => {
+//   try {
+//     const { bookId, index } = req.params;
+
+//     const book = await Book.findById(bookId);
+//     if (!book) return res.status(404).json({ message: "Book not found" });
+
+//     // 1️⃣ Tải file EPUB về tạm
+//     const response = await fetch(book.epubFile);
+//     if (!response.ok) throw new Error("Không tải được file EPUB từ URL");
+
+//     const buffer = Buffer.from(await response.arrayBuffer());
+//     // const tempPath = path.join("temp", `temp-${Date.now()}.epub`);
+//     const tempPath = path.join(os.tmpdir(), `temp-${Date.now()}.epub`);
+//     fs.writeFileSync(tempPath, buffer);
+
+//     // 2️⃣ Parse EPUB
+//     const epub = new EPub(tempPath);
+//     const chapterContent = await new Promise((resolve, reject) => {
+//       epub.on("end", () => {
+//         const chapterIndex = parseInt(index, 10);
+//         const chapter = epub.flow[chapterIndex];
+//         if (!chapter) return reject({ status: 404, message: "Chapter not found" });
+
+//         epub.getChapter(chapter.id, (err, text) => {
+//           if (err) return reject(err);
+//           resolve(text);
+//         });
+//       });
+
+//       epub.on("error", reject);
+//       epub.parse();
+//     });
+
+//     // 3️⃣ Xóa file tạm
+//     fs.unlinkSync(tempPath);
+
+//     res.json({ content: chapterContent });
+//   } catch (err) {
+//     console.error("Lỗi getChapterContent:", err);
+//     if (err.status) {
+//       res.status(err.status).json({ message: err.message });
+//     } else {
+//       res.status(500).json({ message: err.message });
+//     }
+//   }
+// };
+
 export const getChapterContent = async (req, res) => {
   try {
     const { bookId, index } = req.params;
 
     const book = await Book.findById(bookId);
-    if (!book) return res.status(404).json({ message: "Book not found" });
+    if (!book) return res.status(404).json({ message: "Không tìm thấy sách" });
 
-    // 1️⃣ Tải file EPUB về tạm
+    // 1️⃣ Tải EPUB tạm
     const response = await fetch(book.epubFile);
-    if (!response.ok) throw new Error("Không tải được file EPUB từ URL");
+    if (!response.ok) throw new Error("Không tải được EPUB từ URL");
 
     const buffer = Buffer.from(await response.arrayBuffer());
-    // const tempPath = path.join("temp", `temp-${Date.now()}.epub`);
     const tempPath = path.join(os.tmpdir(), `temp-${Date.now()}.epub`);
     fs.writeFileSync(tempPath, buffer);
 
-    // 2️⃣ Parse EPUB
+    // 2️⃣ Lấy thông tin chương từ DB
+    const chapterRecord = await Chapter.findOne({
+      bookId,
+      index: parseInt(index, 10),
+    });
+    if (!chapterRecord)
+      return res.status(404).json({ message: "Không tìm thấy chương" });
+
+    // 3️⃣ Parse EPUB & đọc chương theo href
     const epub = new EPub(tempPath);
+
     const chapterContent = await new Promise((resolve, reject) => {
       epub.on("end", () => {
-        const chapterIndex = parseInt(index, 10);
-        const chapter = epub.flow[chapterIndex];
-        if (!chapter) return reject({ status: 404, message: "Chapter not found" });
-
-        epub.getChapter(chapter.id, (err, text) => {
+        epub.getChapterRaw(chapterRecord.href, (err, text) => {
           if (err) return reject(err);
           resolve(text);
         });
@@ -356,17 +456,15 @@ export const getChapterContent = async (req, res) => {
       epub.parse();
     });
 
-    // 3️⃣ Xóa file tạm
-    fs.unlinkSync(tempPath);
+    // 4️⃣ Xóa file tạm
+    if (fs.existsSync(tempPath)) fs.unlinkSync(tempPath);
 
     res.json({ content: chapterContent });
   } catch (err) {
-    console.error("Lỗi getChapterContent:", err);
-    if (err.status) {
-      res.status(err.status).json({ message: err.message });
-    } else {
-      res.status(500).json({ message: err.message });
-    }
+    console.error("💥 Lỗi getChapterContent:", err);
+    res
+      .status(err.status || 500)
+      .json({ message: err.message || "Lỗi không xác định" });
   }
 };
 
