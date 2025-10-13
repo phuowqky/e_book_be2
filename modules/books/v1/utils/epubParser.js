@@ -125,6 +125,7 @@ const EPub = pkg.default || pkg; // ✅ Lấy class EPub
 
 import fs from "fs";
 import path from "path";
+import os from "os";
 
 /**
  * Hàm parse EPUB từ URL hoặc file path và lưu vào DB
@@ -141,7 +142,8 @@ export async function parseEpubAndSave(epubUrl, bookId) {
     const buffer = Buffer.from(arrayBuffer);
 
     // 📂 Tạo file tạm
-    const tempPath = path.resolve(`temp-${Date.now()}.epub`);
+    // const tempPath = path.resolve(`temp-${Date.now()}.epub`);
+    const tempPath = path.join(os.tmpdir(), `temp-${Date.now()}.epub`);
     fs.writeFileSync(tempPath, buffer);
 
     console.log("✅ EPUB tải xong, bắt đầu parse...");

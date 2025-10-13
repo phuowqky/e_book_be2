@@ -7,7 +7,8 @@ import Chapter from "../../../modules/chapters/v1/chapters_model.js";
 import pkg from "epub2";
 const EPub = pkg.default || pkg;
 import path from "path";
-import fs from "fs";   
+import fs from "fs";
+import os from "os";   
 // Lấy danh sách sách
 export async function getBooks(req, res) {
     try {
@@ -599,7 +600,8 @@ export const getChapterContent = async (req, res) => {
     if (!response.ok) throw new Error("Không tải được file EPUB từ URL");
 
     const buffer = Buffer.from(await response.arrayBuffer());
-    const tempPath = path.join("temp", `temp-${Date.now()}.epub`);
+    // const tempPath = path.join("temp", `temp-${Date.now()}.epub`);
+    const tempPath = path.join(os.tmpdir(), `temp-${Date.now()}.epub`);
     fs.writeFileSync(tempPath, buffer);
 
     // 2️⃣ Parse EPUB
