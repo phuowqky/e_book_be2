@@ -16,13 +16,13 @@ export async function getBooks(req, res) {
         const limit = parseInt(req.query.limit) || 10;
         const skip = (page -1) * limit;
         
-        const books = await Book.find({ status: 'active' })
+        const books = await Book.find({ status: 'Đang hoạt động' })
             .populate('createdBy', 'userName email')
             .sort({ createdAt: -1 })
             .skip(skip)
             .limit(limit);
 
-        const total = await Book.countDocuments({ status: 'active' });
+        const total = await Book.countDocuments({ status: 'Đang hoạt động' });
 
         res.json({ success: true, data: books, pagination:{
             page,
@@ -341,7 +341,7 @@ export const uploadEpub = async (req, res) => {
         epubFileName: file.filename,
         category: req.body.category || "Chưa phân loại",
         language: req.body.language || "Unknown",
-        status: "active",
+        status: "Đang hoạt động",
       });
     }
 
