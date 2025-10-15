@@ -16,13 +16,13 @@ export async function getBooks(req, res) {
         const limit = parseInt(req.query.limit) || 10;
         const skip = (page -1) * limit;
         
-        const books = await Book.find({ status: 'Hoạt động' })
+        const books = await Book.find({ status: 'Mở' })
             .populate('createdBy', 'userName email')
             .sort({ createdAt: -1 })
             .skip(skip)
             .limit(limit);
 
-        const total = await Book.countDocuments({ status: 'Hoạt động' });
+        const total = await Book.countDocuments({ status: 'Mở' });
 
         res.json({ success: true, data: books, pagination:{
             page,
@@ -61,7 +61,7 @@ export async function createBook(req, res) {
     let epubFileName = '';
     let epubFileSize = 0;
 
-    // 1️⃣ Upload cover image lên Cloudinary
+    //  Upload cover image lên Cloudinary
     if (req.files && req.files.coverImage) {
       const uploadCoverImage = () =>
         new Promise((resolve, reject) => {
@@ -85,7 +85,7 @@ export async function createBook(req, res) {
       coverImage = result.secure_url;
     }
 
-    // 2️⃣ Upload EPUB file lên Supabase Storage
+    //  Upload EPUB file lên Supabase Storage
     if (req.files && req.files.epubFile) {
       const epubFileData = req.files.epubFile[0];
       // Tạo fileName thực tế có timestamp để tránh trùng
@@ -111,7 +111,7 @@ export async function createBook(req, res) {
       epubFileSize = epubFileData.size;
     }
 
-    // 3️⃣ Lưu sách vào DB
+    //  Lưu sách vào DB
     const book = new Book({
       title,
       author,
@@ -131,7 +131,7 @@ export async function createBook(req, res) {
 
     await book.save();
 
-    // 4️⃣ Trả về response
+    //  Trả về response
     res.status(201).json({
       success: true,
       data: book,
@@ -191,7 +191,7 @@ export async function downloadEpub(req, res) {
       return res.status(400).json({ success: false, message: "fileName không được để trống" });
     }
 
-    // ✅ Tải file EPUB trực tiếp từ Supabase
+    // Tải file EPUB trực tiếp từ Supabase
     const { data, error } = await supabase.storage
       .from("ebook_storage1")
       .download(`epub-files/${fileName}`);
@@ -201,14 +201,14 @@ export async function downloadEpub(req, res) {
       return res.status(404).json({ success: false, message: "Không tìm thấy file trên Supabase" });
     }
 
-    // ✅ Đọc stream thành buffer
+    //  Đọc stream thành buffer
     const chunks = [];
     for await (const chunk of data.stream()) {
       chunks.push(chunk);
     }
     const buffer = Buffer.concat(chunks);
 
-    // ✅ Gửi về đúng định dạng EPUB
+    //  Gửi về đúng định dạng EPUB
     res.setHeader("Content-Type", "application/epub+zip");
     res.setHeader("Content-Disposition", `attachment; filename="${fileName}"`);
     res.send(buffer);
@@ -225,10 +225,10 @@ export const uploadBook = async (req, res) => {
     const { title, author, epubUrl, category, language } = req.body;
     if (!epubUrl) throw new Error("Thiếu link EPUB");
 
-    // 1️⃣ Parse EPUB trước để lấy metadata và chapters
+    //  Parse EPUB trước để lấy metadata và chapters
     const parsedData = await parseEpubAndSave(epubUrl);
 
-    // 2️⃣ Kiểm tra sách đã tồn tại chưa
+    //  Kiểm tra sách đã tồn tại chưa
     let book = await Book.findOne({ title });
     if (!book) {
       book = await Book.create({
@@ -244,7 +244,7 @@ export const uploadBook = async (req, res) => {
       });
     }
 
-    // 3️⃣ Lưu danh sách chapter
+    //  Lưu danh sách chapter
     if (parsedData.chapters?.length) {
       const chapters = parsedData.chapters.map((chap) => ({
         bookId: book._id,
@@ -293,7 +293,7 @@ export const uploadEpub = async (req, res) => {
         epubFileName: file.filename,
         category: req.body.category || "Chưa phân loại",
         language: req.body.language || "Unknown",
-        status: "Hoạt động",
+        status: "Mở",
       });
     }
 
@@ -330,7 +330,7 @@ export const getChapterContent = async (req, res) => {
     const book = await Book.findById(bookId);
     if (!book) return res.status(404).json({ message: "Không tìm thấy sách" });
 
-    // 1️⃣ Tải EPUB tạm
+    //  Tải EPUB tạm
     const response = await fetch(book.epubFile);
     if (!response.ok) throw new Error("Không tải được EPUB từ URL");
 
@@ -338,7 +338,7 @@ export const getChapterContent = async (req, res) => {
     const tempPath = path.join(os.tmpdir(), `temp-${Date.now()}.epub`);
     fs.writeFileSync(tempPath, buffer);
 
-    // 2️⃣ Lấy thông tin chương từ DB
+    //  Lấy thông tin chương từ DB
     const chapterRecord = await Chapter.findOne({
       bookId,
       index: parseInt(index, 10),
@@ -346,7 +346,7 @@ export const getChapterContent = async (req, res) => {
     if (!chapterRecord)
       return res.status(404).json({ message: "Không tìm thấy chương" });
 
-    // 3️⃣ Parse EPUB & đọc chương theo href
+    //  Parse EPUB & đọc chương theo href
     const epub = new EPub(tempPath);
 
     const chapterContent = await new Promise((resolve, reject) => {
@@ -361,7 +361,7 @@ export const getChapterContent = async (req, res) => {
       epub.parse();
     });
 
-    // 4️⃣ Xóa file tạm
+    //  Xóa file tạm
     if (fs.existsSync(tempPath)) fs.unlinkSync(tempPath);
 
     res.json({ content: chapterContent });

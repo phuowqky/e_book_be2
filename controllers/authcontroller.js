@@ -27,14 +27,7 @@ export async function register(req, res) {
             });
         }
 
-        // Kiểm tra năm sinh hợp lệ
-        // const currentYear = new Date().getFullYear();
-        // if (isNaN(yearOfBirth) || yearOfBirth < 1900 || yearOfBirth > currentYear) {
-        //     return res.status(200).json({
-        //         success: false,
-        //         message: "Invalid year of birth."
-        //     });
-        // }
+
 
         // Kiểm tra mật khẩu trùng khớp
         if (password !== confirmPassword) {
