@@ -9,6 +9,6 @@ const router = express.Router();
 router.get("/:bookId", getListChapters);
 
 // Route  để lấy nội dung chapter
-router.get("/:bookId/:index", getChapterContent);
+// router.get("/:bookId/:index", getChapterContent);
 
 export default router;

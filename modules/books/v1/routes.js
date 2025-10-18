@@ -5,7 +5,8 @@ import {
     createBook, 
     updateBook, 
     deleteBook,
-    uploadBook,
+    uploadChaptersForBook,
+    getChapterByIndex,
     uploadEpub,
     // getChapterContent,
     downloadEpub 
@@ -44,8 +45,11 @@ router.post('/', auth, upload.fields([
 router.put('/:id', auth, updateBook);
 router.delete('/:id', auth, deleteBook);
 router.get('/download/:fileName', downloadEpub);
-router.post("/upload", uploadBook);
-router.post("/upload", upload.single("epub"), uploadEpub);
-// router.get("/books/:bookId/chapters/:index", getChapterContent);
+
+
+router.post("/upload", upload.single("file"), uploadEpub);
+router.post("/upload-url", uploadChaptersForBook);
+
+router.get('/chapter/:bookId/:index', getChapterByIndex);
 
 export default router;

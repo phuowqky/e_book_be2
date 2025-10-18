@@ -15,7 +15,8 @@ const chapterSchema = new mongoose.Schema({
   bookId: { type: mongoose.Schema.Types.ObjectId, ref: "Book", required: true },
   title: { type: String, required: true },
   index: { type: Number },
-  href: { type: String },
+  // href: { type: String },
+  content: { type: String, required: true }
 });
 
 export default mongoose.model("Chapter", chapterSchema);

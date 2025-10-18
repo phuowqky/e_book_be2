@@ -215,7 +215,7 @@ export async function downloadEpub(req, res) {
 
     console.log(`📘 EPUB "${fileName}" tải về thành công (${buffer.length} bytes)`);
   } catch (error) {
-    console.error("💥 Error downloading EPUB:", error);
+    console.error(" Error downloading EPUB:", error);
     res.status(500).json({ success: false, message: "Internal server error" });
   }
 }
@@ -250,7 +250,8 @@ export const uploadBook = async (req, res) => {
         bookId: book._id,
         title: chap.title,
         index: chap.index,
-        href: chap.href,
+        // href: chap.href,
+        content: ch.content
       }));
       await Chapter.insertMany(chapters);
     }
@@ -303,7 +304,8 @@ export const uploadEpub = async (req, res) => {
         bookId: book._id,
         title: chap.title,
         index: chap.index,
-        href: chap.href,
+        // href: chap.href,
+        content: ch.content
       }));
       await Chapter.insertMany(chapters);
     }
@@ -321,82 +323,175 @@ export const uploadEpub = async (req, res) => {
 };
 
 
-
-
 export const getChapterContent = async (req, res) => {
   try {
     const { bookId, index } = req.params;
 
-    const book = await Book.findById(bookId);
-    if (!book) return res.status(404).json({ message: "Không tìm thấy sách" });
-
-    //  Tải EPUB tạm
-    const response = await fetch(book.epubFile);
-    if (!response.ok) throw new Error("Không tải được EPUB từ URL");
-
-    const buffer = Buffer.from(await response.arrayBuffer());
-    const tempPath = path.join(os.tmpdir(), `temp-${Date.now()}.epub`);
-    fs.writeFileSync(tempPath, buffer);
-
-    //  Lấy thông tin chương từ DB
-    const chapterRecord = await Chapter.findOne({
+    const chapter = await Chapter.findOne({
       bookId,
       index: parseInt(index, 10),
     });
-    if (!chapterRecord)
+
+    if (!chapter)
       return res.status(404).json({ message: "Không tìm thấy chương" });
 
-    //  Parse EPUB & đọc chương theo href
-    const epub = new EPub(tempPath);
-
-    const chapterContent = await new Promise((resolve, reject) => {
-      epub.on("end", () => {
-        epub.getChapterRaw(chapterRecord.href, (err, text) => {
-          if (err) return reject(err);
-          resolve(text);
-        });
-      });
-
-      epub.on("error", reject);
-      epub.parse();
-    });
-
-    //  Xóa file tạm
-    if (fs.existsSync(tempPath)) fs.unlinkSync(tempPath);
-
-    res.json({ content: chapterContent });
+    res.json({ content: chapter.content });
   } catch (err) {
-    console.error("💥 Lỗi getChapterContent:", err);
+    console.error(" Lỗi getChapterContent:", err);
     res
       .status(err.status || 500)
       .json({ message: err.message || "Lỗi không xác định" });
   }
 };
 
+
 export const getListChapters = async (req, res) => {
   try {
     const { bookId } = req.params;
 
-    // Kiểm tra sách tồn tại
-    const book = await Book.findById(bookId);
-    if (!book) return res.status(404).json({ success: false, message: "Book not found" });
-
-    // Lấy danh sách chapter trong MongoDB
-    // (vì bạn đã lưu vào collection Chapter khi parse EPUB)
-    const chapters = await Chapter.find({ bookId }).sort({ index: 1 }).select("index title href");
-
-    if (!chapters || chapters.length === 0) {
-      return res.status(404).json({ success: false, message: "No chapters found for this book" });
+    //  Kiểm tra đầu vào hợp lệ
+    if (!bookId) {
+      return res.status(400).json({ success: false, message: "Thiếu bookId trong yêu cầu" });
     }
 
-    res.json({
+    //  Kiểm tra bookId có phải ObjectId hợp lệ không
+    const isObjectId = /^[0-9a-fA-F]{24}$/.test(bookId);
+    if (!isObjectId) {
+      return res.status(400).json({ success: false, message: "bookId không hợp lệ" });
+    }
+
+    //  Tìm sách theo ID
+    const book = await Book.findById(bookId).select("title author");
+    if (!book) {
+      return res.status(404).json({ success: false, message: "Không tìm thấy sách" });
+    }
+
+    //  Lấy danh sách chapter, chỉ lấy trường cần thiết
+    const chapters = await Chapter.find({ bookId })
+      .sort({ index: 1 })
+      .select("index title href");
+
+    //  Kiểm tra có dữ liệu hay không
+    if (!chapters.length) {
+      return res.status(404).json({
+        success: false,
+        message: "Sách này chưa có chương nào được lưu"
+      });
+    }
+
+    //  Trả về dữ liệu
+    res.status(200).json({
       success: true,
-      bookId,
-      total: chapters.length,
-      data: chapters
+      book: {
+        id: book._id,
+        title: book.title,
+        author: book.author,
+      },
+      totalChapters: chapters.length,
+      chapters,
     });
+
   } catch (err) {
-    console.error("💥 Lỗi getListChapters:", err);
+    console.error(" Lỗi getListChapters:", err);
+    res.status(500).json({
+      success: false,
+      message: "Lỗi máy chủ nội bộ",
+      error: err.message,
+    });
+  }
+};
+
+
+
+export const uploadChaptersForBook = async (req, res) => {
+  try {
+    const { title, epubUrl } = req.body;
+    if (!title || !epubUrl) {
+      return res.status(400).json({
+        success: false,
+        message: "Phải truyền cả title và epubUrl",
+      });
+    }
+
+    //  Kiểm tra sách tồn tại theo title
+    let book = await Book.findOne({ title });
+    if (!book) {
+      // Nếu chưa có thì tạo mới
+      book = await Book.create({ title, epubFile: epubUrl });
+    } else {
+      // Nếu đã có, cập nhật epubFile
+      book.epubFile = epubUrl;
+      await book.save();
+    }
+
+    //  Parse EPUB
+    const parsedData = await parseEpubAndSave(epubUrl);
+    const { chapters } = parsedData;
+
+    if (!chapters || chapters.length === 0) {
+      return res.status(400).json({ success: false, message: "Không có chương hợp lệ" });
+    }
+
+    //  Chuẩn bị dữ liệu insert vào MongoDB
+    const chaptersToInsert = chapters
+      .map((ch, idx) => ({
+        bookId: book._id,
+        index: idx,          // sắp xếp theo flow index
+        title: ch.title || `Chương ${idx + 1}`,
+        content: ch.content || "",
+      }));
+
+    //  Xóa chương cũ của sách nếu có
+    await Chapter.deleteMany({ bookId: book._id });
+
+    // Lưu chương mới
+    await Chapter.insertMany(chaptersToInsert);
+
+    res.status(200).json({
+      success: true,
+      message: `Lưu thành công ${chaptersToInsert.length} chương của sách "${book.title}"`,
+      bookId: book._id,
+      totalChapters: chaptersToInsert.length,
+    });
+
+  } catch (err) {
+    console.error(" Lỗi uploadChaptersForBook:", err);
     res.status(500).json({ success: false, message: err.message });
   }
 };
+
+
+
+
+export const getChapterByIndex = async (req, res) => {
+  try {
+    const { bookId, index } = req.params;
+
+    //  Tìm sách theo _id
+    const book = await Book.findById(bookId);
+    if (!book) {
+      return res.status(404).json({ success: false, message: "Không tìm thấy sách" });
+    }
+
+    //  Tìm chương theo bookId và index
+    const chapter = await Chapter.findOne({ bookId: book._id, index: parseInt(index, 10) });
+    if (!chapter) {
+      return res.status(404).json({ success: false, message: "Không tìm thấy chương" });
+    }
+
+    //  Trả về content
+    res.status(200).json({
+      success: true,
+      bookTitle: book.title,
+      chapterIndex: chapter.index,
+      chapterTitle: chapter.title,
+      content: chapter.content,
+    });
+
+  } catch (err) {
+    console.error("Lỗi getChapterByIndex:", err);
+    res.status(500).json({ success: false, message: err.message });
+  }
+};
+
+
