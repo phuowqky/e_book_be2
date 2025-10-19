@@ -8,7 +8,10 @@ import pkg from "epub2";
 const EPub = pkg.default || pkg;
 import path from "path";
 import fs from "fs";
-import os from "os";   
+import os from "os";
+import { htmlToText } from "html-to-text";
+
+
 // Lấy danh sách sách
 export async function getBooks(req, res) {
     try {
@@ -433,13 +436,26 @@ export const uploadChaptersForBook = async (req, res) => {
     }
 
     //  Chuẩn bị dữ liệu insert vào MongoDB
-    const chaptersToInsert = chapters
-      .map((ch, idx) => ({
-        bookId: book._id,
-        index: idx,          // sắp xếp theo flow index
-        title: ch.title || `Chương ${idx + 1}`,
-        content: ch.content || "",
-      }));
+    // const chaptersToInsert = chapters
+    //   .map((ch, idx) => ({
+    //     bookId: book._id,
+    //     index: idx,          // sắp xếp theo flow index
+    //     title: ch.title || `Chương ${idx + 1}`,
+    //     content: ch.content || "",
+    //   }));
+
+    const chaptersToInsert = chapters.map((ch, idx) => ({
+  bookId: book._id,
+  index: idx,
+  title: ch.title || `Chương ${idx + 1}`,
+  // content: htmlToText(ch.content || "", {
+  //   wordwrap: false,
+  //   selectors: [
+  //     { selector: 'a', options: { ignoreHref: true } },
+  //   ],
+  // }),
+  content: ch.content || "",
+}));
 
     //  Xóa chương cũ của sách nếu có
     await Chapter.deleteMany({ bookId: book._id });

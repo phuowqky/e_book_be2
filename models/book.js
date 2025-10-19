@@ -14,7 +14,7 @@ const bookSchema = new mongoose.Schema({
     isbn: { type: String },
     totalPages: { type: Number },
     language: {type: String, default: 'English'},
-    status: { type: String, enum: ['active', 'inactive'], default: 'active' },
+    status: { type: String, enum: ['Mở', 'Khóa'], default: 'Mở' },
     createdBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' }
 }, { timestamps: true });
 

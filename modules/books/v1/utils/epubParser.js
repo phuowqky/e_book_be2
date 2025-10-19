@@ -6,6 +6,7 @@ import path from "path";
 import os from "os";
 import pkg from "epub2"; // sử dụng epub2
 const EPub = pkg.default || pkg;
+import { htmlToText } from "html-to-text";
 
 /**
  * Parse EPUB từ URL và trả về metadata + danh sách chapters
@@ -65,12 +66,22 @@ export async function parseEpubAndSave(epubUrl) {
 
           if (!content.trim()) continue;
 
+          // chapters.push({
+          //   index: chapterIndex++, // tăng index chỉ khi có chương hợp lệ
+          //   title: ch.title ? ch.title.trim() : `Chương ${chapterIndex}`,
+          //   content,
+          //   href: ch.href,
+          // });
+
           chapters.push({
-            index: chapterIndex++, // tăng index chỉ khi có chương hợp lệ
-            title: ch.title ? ch.title.trim() : `Chương ${chapterIndex}`,
-            content,
-            href: ch.href,
-          });
+  index: chapterIndex++,
+  title: ch.title ? ch.title.trim() : `Chương ${chapterIndex}`,
+  content: htmlToText(content, {
+    wordwrap: false,
+    selectors: [{ selector: 'a', options: { ignoreHref: true } }],
+  }).trim(),
+  href: ch.href,
+});
         }
 
         resolve({ metadata, chapters });
