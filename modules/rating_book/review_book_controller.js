@@ -2,7 +2,7 @@ import Review from "../../models/review_book_model.js";
 import Book from '../../models/book.js';
 import User from "../../models/user.js";
 
-// 🟢 Tạo hoặc cập nhật review của người dùng cho 1 sách
+//  Tạo hoặc cập nhật review của người dùng cho 1 sách
 export const createOrUpdateReview = async (req, res) => {
   try {
     const { userId, bookId, rating, comment } = req.body;
@@ -36,7 +36,7 @@ export const createOrUpdateReview = async (req, res) => {
   }
 };
 
-// 🟡 Lấy tất cả review của 1 sách (chỉ sách có comment mới hiển thị)
+//  Lấy tất cả review của 1 sách (chỉ sách có comment mới hiển thị)
 export const getReviewsByBook = async (req, res) => {
   try {
     const { bookId } = req.params;

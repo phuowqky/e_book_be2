@@ -6,7 +6,7 @@ import {
 const router = express.Router();
 
 
-// 📊 Lấy danh sách sách thịnh hành
+//  Lấy danh sách sách thịnh hành
 router.get("/", getTrendingBooks);
 
 export default router;

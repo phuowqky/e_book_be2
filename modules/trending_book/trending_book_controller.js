@@ -1,7 +1,7 @@
 import Review from "../../models/review_book_model.js";
 
 
-// 📊 Lấy danh sách sách thịnh hành dựa trên đánh giá
+//  Lấy danh sách sách thịnh hành dựa trên đánh giá
 export const getTrendingBooks = async (req, res) => {
   try {
     const trending = await Review.aggregate([
