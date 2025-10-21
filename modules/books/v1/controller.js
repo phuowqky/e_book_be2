@@ -3,7 +3,7 @@ import cloudinary from '../../../config/cloudinary.js';
 import streamifier from "streamifier";
 import { supabase } from '../../../config/supabase.js';
 import { parseEpubAndSave } from "./utils/epubParser.js";
-import Chapter from "../../../modules/chapters/v1/chapters_model.js"; 
+import Chapter from "../../../modules/chapters/v1/chapters_model.js";
 import pkg from "epub2";
 const EPub = pkg.default || pkg;
 import path from "path";
@@ -14,45 +14,47 @@ import { htmlToText } from "html-to-text";
 
 // Lấy danh sách sách
 export async function getBooks(req, res) {
-    try {
-        const page = parseInt(req.query.page) || 1;
-        const limit = parseInt(req.query.limit) || 10;
-        const skip = (page -1) * limit;
-        
-        const books = await Book.find({ status: 'Mở' })
-            .populate('createdBy', 'userName email')
-            .sort({ createdAt: -1 })
-            .skip(skip)
-            .limit(limit);
+  try {
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const skip = (page - 1) * limit;
 
-        const total = await Book.countDocuments({ status: 'Mở' });
+    const books = await Book.find({ status: 'Mở' })
+      .populate('createdBy', 'userName email')
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit);
 
-        res.json({ success: true, data: books, pagination:{
-            page,
-            limit,
-            total,
-            totalPages: Math.ceil(total / limit),
-            hasMore: page * limit < total
-        } });
-    } catch (error) {
-        res.status(200).json({ success: false, message: error.message });
-    }
+    const total = await Book.countDocuments({ status: 'Mở' });
+
+    res.json({
+      success: true, data: books, pagination: {
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit),
+        hasMore: page * limit < total
+      }
+    });
+  } catch (error) {
+    res.status(200).json({ success: false, message: error.message });
+  }
 }
 
 // Lấy chi tiết sách
 export async function getBookById(req, res) {
-    try {
-        const book = await Book.findById(req.params.id)
-            .populate('createdBy', 'userName email');
-        
-        if (!book) {
-            return res.status(404).json({ success: false, message: 'Không tìm thấy sách' });
-        }
-        
-        res.json({ success: true, data: book });
-    } catch (error) {
-        res.status(500).json({ success: false, message: error.message });
+  try {
+    const book = await Book.findById(req.params.id)
+      .populate('createdBy', 'userName email');
+
+    if (!book) {
+      return res.status(404).json({ success: false, message: 'Không tìm thấy sách' });
     }
+
+    res.json({ success: true, data: book });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
 }
 
 export async function createBook(req, res) {
@@ -150,40 +152,40 @@ export async function createBook(req, res) {
 
 // Cập nhật sách
 export async function updateBook(req, res) {
-    try {
-        const book = await Book.findByIdAndUpdate(
-            req.params.id,
-            req.body,
-            { new: true, runValidators: true }
-        );
-        
-        if (!book) {
-            return res.status(404).json({ success: false, message: 'Không tìm thấy sách' });
-        }
-        
-        res.json({ success: true, data: book });
-    } catch (error) {
-        res.status(500).json({ success: false, message: error.message });
+  try {
+    const book = await Book.findByIdAndUpdate(
+      req.params.id,
+      req.body,
+      { new: true, runValidators: true }
+    );
+
+    if (!book) {
+      return res.status(404).json({ success: false, message: 'Không tìm thấy sách' });
     }
+
+    res.json({ success: true, data: book });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
 }
 
 // Xóa sách (soft delete)
 export async function deleteBook(req, res) {
-    try {
-        const book = await Book.findByIdAndUpdate(
-            req.params.id,
-            { status: 'inactive' },
-            { new: true }
-        );
-        
-        if (!book) {
-            return res.status(404).json({ success: false, message: 'Không tìm thấy sách' });
-        }
-        
-        res.json({ success: true, message: 'Đã xóa sách thành công' });
-    } catch (error) {
-        res.status(500).json({ success: false, message: error.message });
+  try {
+    const book = await Book.findByIdAndUpdate(
+      req.params.id,
+      { status: 'inactive' },
+      { new: true }
+    );
+
+    if (!book) {
+      return res.status(404).json({ success: false, message: 'Không tìm thấy sách' });
     }
+
+    res.json({ success: true, message: 'Đã xóa sách thành công' });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
 }
 
 export async function downloadEpub(req, res) {
@@ -435,27 +437,14 @@ export const uploadChaptersForBook = async (req, res) => {
       return res.status(400).json({ success: false, message: "Không có chương hợp lệ" });
     }
 
-    //  Chuẩn bị dữ liệu insert vào MongoDB
-    // const chaptersToInsert = chapters
-    //   .map((ch, idx) => ({
-    //     bookId: book._id,
-    //     index: idx,          // sắp xếp theo flow index
-    //     title: ch.title || `Chương ${idx + 1}`,
-    //     content: ch.content || "",
-    //   }));
 
     const chaptersToInsert = chapters.map((ch, idx) => ({
-  bookId: book._id,
-  index: idx,
-  title: ch.title || `Chương ${idx + 1}`,
-  // content: htmlToText(ch.content || "", {
-  //   wordwrap: false,
-  //   selectors: [
-  //     { selector: 'a', options: { ignoreHref: true } },
-  //   ],
-  // }),
-  content: ch.content || "",
-}));
+      bookId: book._id,
+      index: idx,
+      title: ch.title || `Chương ${idx + 1}`,
+
+      content: ch.content || "",
+    }));
 
     //  Xóa chương cũ của sách nếu có
     await Chapter.deleteMany({ bookId: book._id });

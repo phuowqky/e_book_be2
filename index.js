@@ -5,6 +5,8 @@ import authRoutes from './routes/authRoutes.js'
 import bookRoutes from './modules/books/v1/routes.js';
 import userRoutes from './routes/user_routes.js'
 import chapterRouter from './modules/chapters/v1/chapters_routes.js'
+import reviewBookRouter from './modules/rating_book/review_book_routes.js'
+import trendingBookRouters from './modules/trending_book/trending_book_routes.js'
 
 import dotenv from 'dotenv'
 import cors from 'cors'
@@ -41,6 +43,8 @@ app.use("/api/auth", authRoutes);
 app.use('/api/books', bookRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/chapters", chapterRouter);
+app.use("/api/reviews", reviewBookRouter);
+app.use("/api/trending-books", trendingBookRouters);
 
 // TODO: 113
 // connectDBQuestion1() đang k sử dụng

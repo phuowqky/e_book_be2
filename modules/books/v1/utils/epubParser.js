@@ -66,22 +66,16 @@ export async function parseEpubAndSave(epubUrl) {
 
           if (!content.trim()) continue;
 
-          // chapters.push({
-          //   index: chapterIndex++, // tăng index chỉ khi có chương hợp lệ
-          //   title: ch.title ? ch.title.trim() : `Chương ${chapterIndex}`,
-          //   content,
-          //   href: ch.href,
-          // });
 
           chapters.push({
-  index: chapterIndex++,
-  title: ch.title ? ch.title.trim() : `Chương ${chapterIndex}`,
-  content: htmlToText(content, {
-    wordwrap: false,
-    selectors: [{ selector: 'a', options: { ignoreHref: true } }],
-  }).trim(),
-  href: ch.href,
-});
+            index: chapterIndex++,
+            title: ch.title ? ch.title.trim() : `Chương ${chapterIndex}`,
+            content: htmlToText(content, {
+              wordwrap: false,
+              selectors: [{ selector: 'a', options: { ignoreHref: true } }],
+            }).trim(),
+            href: ch.href,
+          });
         }
 
         resolve({ metadata, chapters });
