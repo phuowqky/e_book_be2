@@ -1,6 +1,6 @@
 import Bookmark from "../../../models/bookmark_model.js";
 
-// 🟢 Thêm hoặc cập nhật bookmark
+// Thêm hoặc cập nhật bookmark
 export const setBookmark = async (req, res) => {
   try {
     const { userId, bookId, chapterIndex, position } = req.body;
