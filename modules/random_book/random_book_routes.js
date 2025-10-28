@@ -3,7 +3,7 @@ import { getRandomBooks } from "../../modules/random_book/random_book_controller
 
 const router = express.Router();
 
-// 🎲 Lấy danh sách sách ngẫu nhiên
+// Lấy danh sách sách ngẫu nhiên
 router.get("/", getRandomBooks);
 
 export default router;
