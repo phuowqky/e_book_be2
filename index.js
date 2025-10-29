@@ -10,6 +10,7 @@ import trendingBookRouters from './modules/trending_book/trending_book_routes.js
 import randomBookRoutes from './modules/random_book/random_book_routes.js'
 import newBookRoutes from './modules/new_book/new_book_routes.js'
 import bookmarkRoutes from './modules/boolmarks/v1/bookmark_routes.js'
+import bannerRoutes from './modules/banner/banner_routes.js'
 
 import dotenv from 'dotenv'
 import cors from 'cors'
@@ -51,6 +52,7 @@ app.use("/api/trending-books", trendingBookRouters);
 app.use("/api/random-books", randomBookRoutes);
 app.use("/api/new-books", newBookRoutes);
 app.use("/api/bookmarks", bookmarkRoutes);
+app.use("/api/banners", bannerRoutes);
 
 // TODO: 113
 // connectDBQuestion1() đang k sử dụng
