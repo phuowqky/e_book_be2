@@ -441,7 +441,7 @@ export const uploadChaptersForBook = async (req, res) => {
     const chaptersToInsert = chapters.map((ch, idx) => ({
       bookId: book._id,
       index: idx,
-      title: ch.title || `Chương ${idx + 1}`,
+      title: ch.title || `Chương ${idx}`,
 
       content: ch.content || "",
     }));
