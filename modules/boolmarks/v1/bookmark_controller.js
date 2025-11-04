@@ -88,12 +88,12 @@ export const getBookmarksByUser = async (req, res) => {
 
     // Chuẩn hóa dữ liệu trả về (ví dụ: thêm % tiến độ)
     const data = bookmarks.map((b) => ({
-      id: b._id,
+      _id: b._id,
       chapterIndex: b.chapterIndex,
       position: b.position,
       progress: `${b.position || 0}%`, // hoặc tùy logic bạn tính %
       book: {
-        id: b.bookId._id,
+        _id: b.bookId._id,
         title: b.bookId.title,
         author: b.bookId.author,
         coverImage: b.bookId.coverImage,
