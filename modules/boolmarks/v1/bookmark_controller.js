@@ -71,4 +71,46 @@ export const setBookmark = async (req, res) => {
   }
 };
 
+//  Lấy tất cả bookmark của 1 user (thư viện cá nhân)
+export const getBookmarksByUser = async (req, res) => {
+  try {
+    const { userId } = req.params;
+
+    const bookmarks = await Bookmark.find({ userId })
+      .populate("bookId", "title coverImage author");
+
+    if (!bookmarks || bookmarks.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: "Người dùng chưa có sách nào trong thư viện",
+      });
+    }
+
+    // Chuẩn hóa dữ liệu trả về (ví dụ: thêm % tiến độ)
+    const data = bookmarks.map((b) => ({
+      id: b._id,
+      chapterIndex: b.chapterIndex,
+      position: b.position,
+      progress: `${b.position || 0}%`, // hoặc tùy logic bạn tính %
+      book: {
+        id: b.bookId._id,
+        title: b.bookId.title,
+        author: b.bookId.author,
+        coverImage: b.bookId.coverImage,
+      },
+    }));
+
+    res.status(200).json({
+      success: true,
+      message: "Lấy danh sách bookmark thành công",
+      data,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
+
 
