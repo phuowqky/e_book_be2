@@ -29,9 +29,51 @@ export const getBookmark = async (req, res) => {
 
 
 
+// export const setBookmark = async (req, res) => {
+//   try {
+//     const { userId, bookId, chapterIndex, position } = req.body;
+
+//     if (!userId || !bookId || chapterIndex === undefined) {
+//       return res.status(400).json({
+//         success: false,
+//         message: "Thiếu thông tin userId, bookId hoặc chapterIndex",
+//       });
+//     }
+
+//     let bookmark = await Bookmark.findOne({ userId, bookId });
+
+//     if (bookmark) {
+//       bookmark.chapterIndex = chapterIndex;
+//       bookmark.position = position ?? 0;
+//       await bookmark.save();
+//     } else {
+//       bookmark = await Bookmark.create({
+//         userId,
+//         bookId,
+//         chapterIndex,
+//         position,
+//       });
+//     }
+
+//     // Populate sau khi tạo/cập nhật
+//     await bookmark.populate("bookId", "title coverImage author");
+
+//     res.status(200).json({
+//       success: true,
+//       message: "Đánh dấu trang thành công",
+//       data: bookmark,
+//     });
+//   } catch (error) {
+//     res.status(500).json({
+//       success: false,
+//       message: error.message,
+//     });
+//   }
+// };
+
 export const setBookmark = async (req, res) => {
   try {
-    const { userId, bookId, chapterIndex, position } = req.body;
+    const { userId, bookId, chapterIndex, position, progress } = req.body;
 
     if (!userId || !bookId || chapterIndex === undefined) {
       return res.status(400).json({
@@ -42,20 +84,37 @@ export const setBookmark = async (req, res) => {
 
     let bookmark = await Bookmark.findOne({ userId, bookId });
 
+    // Nếu có thì cập nhật
     if (bookmark) {
       bookmark.chapterIndex = chapterIndex;
-      bookmark.position = position ?? 0;
+      bookmark.position = position ?? bookmark.position;
+      bookmark.progress = progress ?? bookmark.progress;
+
+      // ✅ Tự cập nhật trạng thái nếu progress >= 100%
+      const progressValue = parseFloat((bookmark.progress || "0").replace("%", ""));
+      if (progressValue >= 100) {
+        bookmark.status = "completed";
+      } else {
+        bookmark.status = "reading";
+      }
+
       await bookmark.save();
-    } else {
+    }
+    // Nếu chưa có thì tạo mới
+    else {
+      const progressValue = parseFloat((progress || "0").replace("%", ""));
+      const status = progressValue >= 100 ? "completed" : "reading";
+
       bookmark = await Bookmark.create({
         userId,
         bookId,
         chapterIndex,
         position,
+        progress: progress ?? "0%",
+        status,
       });
     }
 
-    // Populate sau khi tạo/cập nhật
     await bookmark.populate("bookId", "title coverImage author");
 
     res.status(200).json({
@@ -70,6 +129,7 @@ export const setBookmark = async (req, res) => {
     });
   }
 };
+
 
 //  Lấy tất cả bookmark của 1 user (thư viện cá nhân)
 export const getBookmarksByUser = async (req, res) => {
@@ -87,11 +147,25 @@ export const getBookmarksByUser = async (req, res) => {
     }
 
     // Chuẩn hóa dữ liệu trả về (ví dụ: thêm % tiến độ)
+    // const data = bookmarks.map((b) => ({
+    //   _id: b._id,
+    //   chapterIndex: b.chapterIndex,
+    //   position: b.position,
+    //   progress: `${b.position || 0}%`, // hoặc tùy logic bạn tính %
+    //   book: {
+    //     _id: b.bookId._id,
+    //     title: b.bookId.title,
+    //     author: b.bookId.author,
+    //     coverImage: b.bookId.coverImage,
+    //   },
+    // }));
+
     const data = bookmarks.map((b) => ({
       _id: b._id,
       chapterIndex: b.chapterIndex,
       position: b.position,
-      progress: `${b.position || 0}%`, // hoặc tùy logic bạn tính %
+      progress: b.progress,
+      status: b.status,
       book: {
         _id: b.bookId._id,
         title: b.bookId.title,
@@ -113,4 +187,22 @@ export const getBookmarksByUser = async (req, res) => {
   }
 };
 
+export const getBookmarksByStatus = async (req, res) => {
+  try {
+    const { userId, status } = req.params;
 
+    const bookmarks = await Bookmark.find({ userId, status })
+      .populate("bookId", "title coverImage author");
+
+    res.status(200).json({
+      success: true,
+      message: `Lấy sách theo trạng thái: ${status}`,
+      data: bookmarks,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
