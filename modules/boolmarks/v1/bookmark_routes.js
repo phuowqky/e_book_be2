@@ -1,5 +1,5 @@
 import express from "express";
-import { setBookmark, getBookmark, getBookmarksByUser, getBookmarksByStatus} from "../../boolmarks/v1/bookmark_controller.js";
+import { setBookmark, getBookmark, getBookmarksByUser} from "../../boolmarks/v1/bookmark_controller.js";
 
 const router = express.Router();
 
@@ -10,7 +10,5 @@ router.post("/", setBookmark);
 router.get("/:userId/:bookId", getBookmark);
 
 router.get("/:userId", getBookmarksByUser);
-
-router.get("/:userId/status/:status", getBookmarksByStatus);
 
 export default router;
