@@ -45,6 +45,7 @@ export const setBookmark = async (req, res) => {
     if (bookmark) {
       bookmark.chapterIndex = chapterIndex;
       bookmark.position = position ?? 0;
+      bookmark.isCompleted = position >= 100;
       await bookmark.save();
     } else {
       bookmark = await Bookmark.create({
@@ -52,6 +53,7 @@ export const setBookmark = async (req, res) => {
         bookId,
         chapterIndex,
         position,
+        isCompleted: position >= 100,
       });
     }
 

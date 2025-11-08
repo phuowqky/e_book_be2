@@ -8,6 +8,7 @@ const bookmarkSchema = new mongoose.Schema(
     bookId: { type: mongoose.Schema.Types.ObjectId, ref: "Book", required: true },
     chapterIndex: { type: Number, required: true },
     position: { type: Number, default: 0 },
+    isCompleted: { type: Boolean, default: false },
   },
   { timestamps: true }
 );
