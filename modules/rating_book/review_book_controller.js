@@ -53,3 +53,35 @@ export const getReviewsByBook = async (req, res) => {
     res.status(500).json({ message: "Lỗi server", error: error.message });
   }
 };
+
+// 🧩 Xóa review của người dùng cho 1 sách
+export const deleteReview = async (req, res) => {
+  try {
+    const { userId, bookId } = req.params;
+
+    // Kiểm tra đầu vào
+    if (!userId || !bookId) {
+      return res.status(400).json({ success: false, message: "Thiếu userId hoặc bookId" });
+    }
+
+    // Tìm review
+    const review = await Review.findOne({ userId, bookId });
+    if (!review) {
+      return res.status(404).json({ success: false, message: "Không tìm thấy review để xóa" });
+    }
+
+    // Xóa review
+    await Review.deleteOne({ _id: review._id });
+
+    res.status(200).json({
+      success: true,
+      message: "Xóa review thành công",
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: "Lỗi server",
+      error: error.message,
+    });
+  }
+};
