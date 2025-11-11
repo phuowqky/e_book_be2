@@ -13,7 +13,7 @@ import bookmarkRoutes from './modules/boolmarks/v1/bookmark_routes.js'
 import bannerRoutes from './modules/banner/banner_routes.js'
 import recommendationRouter from './modules/recommendation/user_recommendation_routes.js'
 import bookRecommendationRouter from './modules/recommendation/chat_recommendation_routes.js'
-
+import getMostReviewedBooks from './modules/rating_book/most_review_routes.js'
 
 import dotenv from 'dotenv'
 import cors from 'cors'
@@ -58,6 +58,7 @@ app.use("/api/bookmarks", bookmarkRoutes);
 app.use("/api/banners", bannerRoutes);
 app.use("/api/recommendations", recommendationRouter);
 app.use("/api/bookrecommendations", bookRecommendationRouter);
+app.use("/api/ranking", getMostReviewedBooks);
 
 // TODO: 113
 // connectDBQuestion1() đang k sử dụng
