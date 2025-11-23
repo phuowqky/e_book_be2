@@ -253,3 +253,81 @@ export async function getAccount(req, res) {
     });
   }
 }
+
+// export async function getAvatar(req, res) {
+//   try {
+//     const userId = req.userId; // Lấy từ middleware verifyToken
+
+//     if (!userId) {
+//       return res.status(401).json({
+//         success: false,
+//         message: "Không có quyền truy cập. Vui lòng đăng nhập."
+//       });
+//     }
+
+//     // Chỉ lấy trường avt
+//     const user = await User.findById(userId).select("avt");
+
+//     if (!user) {
+//       return res.status(404).json({
+//         success: false,
+//         message: "User không tồn tại."
+//       });
+//     }
+
+//     return res.status(200).json({
+//       success: true,
+//       message: "Lấy avatar thành công",
+//       data: {
+//         avt: user.avt || null // nếu chưa có ảnh
+//       }
+//     });
+
+//   } catch (err) {
+//     console.error(" Lỗi lấy avatar:", err);
+//     return res.status(500).json({
+//       success: false,
+//       message: "Lỗi server: " + err.message
+//     });
+//   }
+// }
+
+export async function getAvatar(req, res) {
+  try {
+    const userId = req.userId; // Lấy từ middleware verifyToken
+
+    if (!userId) {
+      return res.status(401).json({
+        success: false,
+        message: "Không có quyền truy cập. Vui lòng đăng nhập."
+      });
+    }
+
+    // Lấy avatar + userName
+    const user = await User.findById(userId).select("avt userName");
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "User không tồn tại."
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: "Lấy avatar & username thành công",
+      data: {
+        avt: user.avt || null,
+        userName: user.userName
+      }
+    });
+
+  } catch (err) {
+    console.error(" Lỗi lấy avatar:", err);
+    return res.status(500).json({
+      success: false,
+      message: "Lỗi server: " + err.message
+    });
+  }
+}
+
