@@ -6,6 +6,7 @@ const userSchema = new mongoose.Schema({
     email: { type: String, required: true, unique: true },
     // yearOfBirth: { type: Number, required: true },
     password: { type: String, required: true },
+    avt: { type: String, default: "" },
     favorites: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Book', default: [] }],
     role: { type: Number, default: 1 } // Thêm trường role với giá trị mặc định là 1 (USER)
 }, { timestamps: true });

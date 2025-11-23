@@ -26,7 +26,7 @@ export function auth(req, res, next) {
                 message: 'Token không hợp lệ hoặc đã hết hạn',
             });
         }
-        req.user = decoded;
+        req.userId = decoded.userId;
         next();
     });
 }
