@@ -4,6 +4,7 @@ import User from "../models/user.js";
 
 import jwt from "jsonwebtoken"; // Thêm import jwt
 import dotenv from "dotenv"; // Thêm import dotenv
+import cloudinary from '../config/cloudinary.js';
 
 dotenv.config(); // Cấu hình dotenv
 
@@ -158,65 +159,95 @@ export async function login(req, res) {
 export async function updateAccount(req, res) {
   try {
     const userId = req.userId;
-    const { userName, phone, email, avt } = req.body;
+    const { userName, phone, email } = req.body;
 
-    // Kiểm tra rỗng
-    if (!userName || !phone || !email) {
-      return res.status(400).json({
-        success: false,
-        message: "userName, phone và email là bắt buộc."
-      });
+    let avt;
+
+    if (req.file) {
+      const result = await cloudinary.uploader.upload_stream(
+        { folder: "avatars" },
+        (error, uploadResult) => {
+          if (error) throw error;
+          avt = uploadResult.secure_url;
+        }
+      );
+      result.end(req.file.buffer);
     }
 
-    // Kiểm tra email hợp lệ
-    if (!validator.isEmail(email)) {
-      return res.status(400).json({
-        success: false,
-        message: "Định dạng email không hợp lệ."
-      });
-    }
-
-    // Kiểm tra email hoặc phone đã tồn tại ở user khác
-    const existingUser = await User.findOne({
-      $or: [{ email }, { phone }],
-      _id: { $ne: userId }
-    });
-
-    if (existingUser) {
-      return res.status(400).json({
-        success: false,
-        message: "Email hoặc số điện thoại đã được sử dụng."
-      });
-    }
-
-    // Cập nhật thông tin
     const updatedUser = await User.findByIdAndUpdate(
       userId,
-      { userName, phone, email, avt },
-      { new: true, runValidators: true }
-    ).select("-password"); // Không trả mật khẩu
+      { userName, phone, email, ...(avt && { avt }) },
+      { new: true }
+    ).select("-password");
 
-    if (!updatedUser) {
-      return res.status(404).json({
-        success: false,
-        message: "User không tồn tại"
-      });
-    }
-
-    return res.status(200).json({
-      success: true,
-      message: "Cập nhật tài khoản thành công",
-      data: updatedUser
-    });
-
+    return res.json({ success: true, data: updatedUser });
   } catch (err) {
-    console.error(" Lỗi cập nhật thông tin:", err);
-    return res.status(500).json({
-      success: false,
-      message: "Lỗi server: " + err.message
-    });
+    res.status(500).json({ success: false, message: err.message });
   }
 }
+
+// export async function updateAccount(req, res) {
+//   try {
+//     const userId = req.userId;
+//     const { userName, phone, email, avt } = req.body;
+
+//     // Kiểm tra rỗng
+//     if (!userName || !phone || !email) {
+//       return res.status(400).json({
+//         success: false,
+//         message: "userName, phone và email là bắt buộc."
+//       });
+//     }
+
+//     // Kiểm tra email hợp lệ
+//     if (!validator.isEmail(email)) {
+//       return res.status(400).json({
+//         success: false,
+//         message: "Định dạng email không hợp lệ."
+//       });
+//     }
+
+//     // Kiểm tra email hoặc phone đã tồn tại ở user khác
+//     const existingUser = await User.findOne({
+//       $or: [{ email }, { phone }],
+//       _id: { $ne: userId }
+//     });
+
+//     if (existingUser) {
+//       return res.status(400).json({
+//         success: false,
+//         message: "Email hoặc số điện thoại đã được sử dụng."
+//       });
+//     }
+
+//     // Cập nhật thông tin
+//     const updatedUser = await User.findByIdAndUpdate(
+//       userId,
+//       { userName, phone, email, avt },
+//       { new: true, runValidators: true }
+//     ).select("-password"); // Không trả mật khẩu
+
+//     if (!updatedUser) {
+//       return res.status(404).json({
+//         success: false,
+//         message: "User không tồn tại"
+//       });
+//     }
+
+//     return res.status(200).json({
+//       success: true,
+//       message: "Cập nhật tài khoản thành công",
+//       data: updatedUser
+//     });
+
+//   } catch (err) {
+//     console.error(" Lỗi cập nhật thông tin:", err);
+//     return res.status(500).json({
+//       success: false,
+//       message: "Lỗi server: " + err.message
+//     });
+//   }
+// }
 
 export async function getAccount(req, res) {
   try {
@@ -254,43 +285,6 @@ export async function getAccount(req, res) {
   }
 }
 
-// export async function getAvatar(req, res) {
-//   try {
-//     const userId = req.userId; // Lấy từ middleware verifyToken
-
-//     if (!userId) {
-//       return res.status(401).json({
-//         success: false,
-//         message: "Không có quyền truy cập. Vui lòng đăng nhập."
-//       });
-//     }
-
-//     // Chỉ lấy trường avt
-//     const user = await User.findById(userId).select("avt");
-
-//     if (!user) {
-//       return res.status(404).json({
-//         success: false,
-//         message: "User không tồn tại."
-//       });
-//     }
-
-//     return res.status(200).json({
-//       success: true,
-//       message: "Lấy avatar thành công",
-//       data: {
-//         avt: user.avt || null // nếu chưa có ảnh
-//       }
-//     });
-
-//   } catch (err) {
-//     console.error(" Lỗi lấy avatar:", err);
-//     return res.status(500).json({
-//       success: false,
-//       message: "Lỗi server: " + err.message
-//     });
-//   }
-// }
 
 export async function getAvatar(req, res) {
   try {

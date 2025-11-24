@@ -20,4 +20,5 @@ router.get("/", getBanners); // Xem danh sách banner
 router.post("/", upload.single("image"), createBanner); // Tạo banner mới
 router.delete("/", deleteAllBanners); // Xóa tất cả banner
 
+export { upload };
 export default router;
