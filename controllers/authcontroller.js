@@ -262,7 +262,6 @@ export async function getAccount(req, res) {
 
     // Tìm user theo ID, ẩn password
     const user = await User.findById(userId).select("-password");
-
     if (!user) {
       return res.status(404).json({
         success: false,
@@ -270,20 +269,69 @@ export async function getAccount(req, res) {
       });
     }
 
+    // Chuyển _id thành id và giữ cấu trúc giống login
+    const userData = {
+      id: user._id,
+      phone: user.phone,
+      userName: user.userName,
+      email: user.email,
+      // yearOfBirth: user.yearOfBirth,
+      role: user.role || 1
+    };
+
     return res.status(200).json({
       success: true,
       message: "Lấy thông tin tài khoản thành công",
-      data: user
+      data: {
+        user: userData
+      }
     });
 
   } catch (err) {
-    console.error(" Lỗi lấy thông tin tài khoản:", err);
+    console.error("Lỗi lấy thông tin tài khoản:", err);
     return res.status(500).json({
       success: false,
       message: "Lỗi server: " + err.message
     });
   }
 }
+
+
+// export async function getAccount(req, res) {
+//   try {
+//     const userId = req.userId; // Lấy từ middleware verifyToken
+
+//     if (!userId) {
+//       return res.status(401).json({
+//         success: false,
+//         message: "Không có quyền truy cập. Vui lòng đăng nhập."
+//       });
+//     }
+
+//     // Tìm user theo ID, ẩn password
+//     const user = await User.findById(userId).select("-password");
+
+//     if (!user) {
+//       return res.status(404).json({
+//         success: false,
+//         message: "User không tồn tại."
+//       });
+//     }
+
+//     return res.status(200).json({
+//       success: true,
+//       message: "Lấy thông tin tài khoản thành công",
+//       data: user
+//     });
+
+//   } catch (err) {
+//     console.error(" Lỗi lấy thông tin tài khoản:", err);
+//     return res.status(500).json({
+//       success: false,
+//       message: "Lỗi server: " + err.message
+//     });
+//   }
+// }
 
 
 export async function getAvatar(req, res) {
