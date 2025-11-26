@@ -269,14 +269,15 @@ export async function getAccount(req, res) {
       });
     }
 
-    // Chuyển _id thành id và giữ cấu trúc giống login
+    
     const userData = {
       id: user._id,
       phone: user.phone,
       userName: user.userName,
       email: user.email,
       // yearOfBirth: user.yearOfBirth,
-      role: user.role || 1
+      role: user.role || 1,
+      avt: user.avt
     };
 
     return res.status(200).json({
