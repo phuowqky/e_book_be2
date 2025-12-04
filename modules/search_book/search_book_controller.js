@@ -22,7 +22,6 @@ export async function searchBooks(req, res) {
       $or: [
         { title: searchRegex },
         { author: searchRegex },
-        { description: searchRegex },
         { category: searchRegex },
         { tags: searchRegex },
         { isbn: searchRegex }
