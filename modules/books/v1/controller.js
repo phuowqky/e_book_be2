@@ -131,7 +131,7 @@ export async function createBook(req, res) {
       isbn,
       totalPages,
       language,
-      createdBy: req.user.id
+      // createdBy: req.user.id
     });
 
     await book.save();

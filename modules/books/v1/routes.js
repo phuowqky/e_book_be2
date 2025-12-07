@@ -38,7 +38,7 @@ router.get('/', getBooks);
 router.get('/:id', getBookById);
 
 // Protected routes - Cần đăng nhập
-router.post('/', auth, upload.fields([
+router.post('/', upload.fields([
     { name: 'coverImage', maxCount: 1 },
     { name: 'epubFile', maxCount: 1 }
 ]), createBook);
